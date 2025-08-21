@@ -1,0 +1,172 @@
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Proyecto: Caída — Dashboard</title>
+    <!-- Tailwind (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React 18 (CDN UMD) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Recharts (UMD) -->
+    <script crossorigin src="https://unpkg.com/recharts/umd/Recharts.min.js"></script>
+    <!-- Babel (so we can write JSX inline) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+      /* Evita selección accidental en títulos */
+      h1, h2, h3 { user-select: none; }
+    </style>
+  </head>
+  <body class="bg-white text-gray-900">
+    <div class="max-w-6xl mx-auto p-6">
+      <div id="root"></div>
+    </div>
+
+    <!-- Edita los datos en este mismo archivo y guarda. -->
+    <script type="text/babel">
+      const {
+        LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+        BarChart, Bar, Legend
+      } = Recharts;
+
+      // ===================== ZONA EDITABLE =====================
+      // Probabilidad total diaria
+      const history = [
+        { date: "2025-08-21", prob: 27 },
+      ];
+
+      // Bandas de escenarios (6–18 meses)
+      const scenarios = {
+        estancamiento: { min: 55, max: 62 },
+        escalada: { min: 20, max: 28 },
+        fractura: { min: 18, max: 25 },
+      };
+
+      // Señales activadas hoy
+      const signalsToday = [
+        { category: "Externo (EE. UU.)", count: 1, detail: "Escuadra anfibia + destructores" },
+        { category: "Purgas internas", count: 1, detail: "AN/Tupamaros; IGT" },
+        { category: "Diplomacia (Colombia)", count: 1, detail: "Negó aval/‘acuerdo’ militar" },
+        { category: "Aliados (Rusia/China)", count: 1, detail: "Sin respaldo público específico" },
+      ];
+
+      // Razones clave del día (para WhatsApp / resumen corto)
+      const reasonsToday = [
+        "EE. UU. envía escuadra anfibia; siguen 3 destructores → mayor presión y riesgo de roce.",
+        "Purgas: AN allana inmunidad a diputado Tupamaro; sale Inspectora Gral. de Tribunales.",
+        "Colombia rechaza intervención y niega 'acuerdo' militar; 🇻🇪 restringe drones 30 días."
+      ];
+      // =================== FIN ZONA EDITABLE ===================
+
+      const barData = signalsToday.map((s) => ({ name: s.category, value: s.count }));
+      const latest = history[history.length - 1];
+
+      function Card({ title, children }) {
+        return (
+          <div className="rounded-2xl border border-gray-100 shadow-sm bg-white">
+            {title && (
+              <div className="p-4 border-b">
+                <h3 className="font-semibold text-base">{title}</h3>
+              </div>
+            )}
+            <div className="p-4">{children}</div>
+          </div>
+        );
+      }
+
+      function Badge({ children }) {
+        return <span className="inline-block px-2 py-1 text-xs rounded-full bg-gray-100">{children}</span>;
+      }
+
+      function Dashboard() {
+        return (
+          <div className="grid grid-cols-1 gap-6">
+            {/* Encabezado */}
+            <header className="space-y-2">
+              <h1 className="text-3xl font-bold">Proyecto: Caída — Dashboard</h1>
+              <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
+                <span>Última actualización: <span className="font-medium">{latest.date}</span></span>
+                <Badge>Prob. total: <span className="font-semibold">{latest.prob}%</span></Badge>
+              </div>
+            </header>
+
+            {/* Escenarios */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card title="Estancamiento coercitivo">
+                <p className="text-3xl font-semibold">
+                  {scenarios.estancamiento.min}–{scenarios.estancamiento.max}%
+                </p>
+                <p className="text-xs text-gray-600">Banda estimada actual</p>
+              </Card>
+              <Card title="Escalada limitada">
+                <p className="text-3xl font-semibold">
+                  {scenarios.escalada.min}–{scenarios.escalada.max}%
+                </p>
+                <p className="text-xs text-gray-600">Riesgo de incidentes/roces</p>
+              </Card>
+              <Card title="Fractura de élites">
+                <p className="text-3xl font-semibold">
+                  {scenarios.fractura.min}–{scenarios.fractura.max}%
+                </p>
+                <p className="text-xs text-gray-600">Negociación/defecciones</p>
+              </Card>
+            </div>
+
+            {/* Probabilidad diaria (línea) */}
+            <Card title="Probabilidad de caída/fractura (diaria)">
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={history} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
+                    <Tooltip formatter={(v) => `${v}%`} />
+                    <Line type="monotone" dataKey="prob" dot strokeWidth={2} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+              <p className="text-xs text-gray-600 mt-2">
+                Hoy: <span className="font-medium">{latest.prob}%</span>
+              </p>
+            </Card>
+
+            {/* Señales activadas hoy (barras) */}
+            <Card title="Señales activadas hoy">
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={barData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} angle={-10} textAnchor="end" height={60} />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="value" name="Eventos" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <ul className="mt-3 text-sm list-disc list-inside text-gray-700">
+                {signalsToday.map((s, i) => (
+                  <li key={i}>
+                    <span className="font-medium">{s.category}:</span> {s.detail}
+                  </li>
+                ))}
+              </ul>
+            </Card>
+
+            {/* Razones clave (texto corto) */}
+            <Card title="Razones clave del día (resumen)">
+              <ul className="text-sm list-disc list-inside text-gray-700">
+                {reasonsToday.map((r, i) => <li key={i}>{r}</li>)}
+              </ul>
+            </Card>
+          </div>
+        );
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById("root"));
+      root.render(<Dashboard />);
+    </script>
+  </body>
+</html>
